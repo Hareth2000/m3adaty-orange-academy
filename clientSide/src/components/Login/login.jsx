@@ -2,6 +2,20 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { Mail, Lock, AlertCircle } from "lucide-react";
+import { GoogleLogin } from "@react-oauth/google";
+
+// إضافة التنسيقات المخصصة
+const googleButtonStyles = {
+  width: '100%',
+  height: '48px',
+  borderRadius: '12px',
+  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+  transition: 'all 0.3s ease',
+  '&:hover': {
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+    transform: 'translateY(-1px)'
+  }
+};
 
 const Login = ({ switchForm }) => {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -46,6 +60,29 @@ const Login = ({ switchForm }) => {
       }
     } catch (error) {
       setError(error.response?.data?.message || "فشل تسجيل الدخول");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setLoading(true);
+      const response = await axios.post(
+        "http://localhost:5000/api/users/google-login",
+        { credential: credentialResponse.credential },
+        { withCredentials: true }
+      );
+
+      const userData = await fetchUserRole();
+      
+      if (userData?.role === "partner") {
+        window.location.href = `/partner/${userData.userId}`;
+      } else {
+        window.location.href = "/";
+      }
+    } catch (error) {
+      setError(error.response?.data?.message || "فشل تسجيل الدخول باستخدام Google");
     } finally {
       setLoading(false);
     }
@@ -169,6 +206,44 @@ const Login = ({ switchForm }) => {
             )}
           </motion.button>
         </form>
+
+        <div className="mt-6">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">أو</span>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => {
+                setError("فشل تسجيل الدخول باستخدام Google");
+              }}
+              render={renderProps => (
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={renderProps.onClick}
+                  disabled={renderProps.disabled}
+                  className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 text-gray-700 py-4 px-6 rounded-2xl font-medium shadow-lg hover:shadow-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed hover:border-gray-300"
+                >
+                  <div className="flex items-center gap-3">
+                    <img 
+                      src="https://www.google.com/favicon.ico" 
+                      alt="Google" 
+                      className="w-6 h-6"
+                    />
+                    <span className="text-base">تسجيل الدخول باستخدام Google</span>
+                  </div>
+                </motion.button>
+              )}
+            />
+          </div>
+        </div>
 
         <p className="text-center text-gray-600 mt-8">
           ليس لديك حساب؟{" "}

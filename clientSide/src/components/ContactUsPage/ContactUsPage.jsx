@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
-import { MapPin, Phone, Mail, Clock, Send, MessageCircle, Facebook, Twitter, Linkedin, ArrowRight } from 'lucide-react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { MapPin, Phone, Mail, Clock, Send, MessageCircle, Facebook, Twitter, Linkedin, ArrowRight, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+// تهيئة Gemini API
+const genAI = new GoogleGenerativeAI("AIzaSyCAu_Hd4hK4wRTV8WURuJT_O5P4qONq1GE");
 
 const ContactUsPage = () => {
   const [formData, setFormData] = useState({
@@ -13,6 +17,12 @@ const ContactUsPage = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [messages, setMessages] = useState([
+    { role: 'system', content: 'مرحباً! كيف يمكنني مساعدتك اليوم؟' }
+  ]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -23,7 +33,6 @@ const ContactUsPage = () => {
     setIsSubmitting(true);
     
     try {
-      // أرسل البيانات إلى الباكند
       await fetch("http://localhost:5000/api/contact", {
         method: "POST",
         headers: {
@@ -44,6 +53,38 @@ const ContactUsPage = () => {
     } finally {
       setIsSubmitting(false);
       setTimeout(() => setSubmitStatus(null), 3000);
+    }
+  };
+
+  const handleChatSubmit = async (e) => {
+    e.preventDefault();
+    if (!inputMessage.trim()) return;
+
+    const userMessage = inputMessage;
+    setInputMessage('');
+    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    setIsLoading(true);
+
+    try {
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.0-flash",
+      });
+      
+      const result = await model.generateContent(userMessage);
+      if (result.response && result.response.candidates) {
+        const aiReply = result.response.candidates[0].content.parts[0].text;
+        setMessages(prev => [...prev, { role: 'assistant', content: aiReply }]);
+      } else {
+        throw new Error("Invalid AI response");
+      }
+    } catch (error) {
+      console.error('Error in chat:', error);
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: 'عذراً، حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.' 
+      }]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -266,9 +307,7 @@ const ContactUsPage = () => {
                       ? 'bg-green-50 text-green-700 border border-green-100' 
                       : 'bg-red-50 text-red-700 border border-red-100'
                   }`}>
-                    {submitStatus === 'success' 
-                      ? 'تم إرسال رسالتك بنجاح! سنتواصل معك قريباً.' 
-                      : 'حدث خطأ في إرسال الرسالة. الرجاء المحاولة مرة أخرى.'}
+                    {submitStatus === 'success' ? 'تم الإرسال بنجاح!' : 'حدث خطأ أثناء الإرسال. يرجى المحاولة مرة أخرى لاحقًا.'}
                   </div>
                 )}
               </form>
@@ -297,61 +336,82 @@ const ContactUsPage = () => {
           </div>
         </div>
       </section>
-      
-      {/* Social Media Section - Modern, Clean Design */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <motion.div 
-            initial="hidden"
-            animate="visible"
-            variants={fadeIn}
-            transition={{ duration: 0.5 }}
-            className="text-center"
-          >
-            <h2 className="text-xl font-bold text-gray-800 mb-4">تابعنا على مواقع التواصل الاجتماعي</h2>
-            <div className="w-16 h-1 bg-yellow-500 mx-auto mb-8 rounded-full"></div>
-            
-            <div className="flex justify-center gap-4">
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center shadow-sm hover:bg-yellow-500 hover:text-white transition-colors duration-300"
-                aria-label="Facebook"
-              >
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center shadow-sm hover:bg-yellow-500 hover:text-white transition-colors duration-300"
-                aria-label="Twitter"
-              >
-                <Twitter className="w-5 h-5" />
-              </a>
-              <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center shadow-sm hover:bg-yellow-500 hover:text-white transition-colors duration-300"
-                aria-label="LinkedIn"
-              >
-                <Linkedin className="w-5 h-5" />
-              </a>
-            </div>
-          </motion.div>
-        </div>
-      </section>
 
-      {/* Live Chat Button - Modern Style */}
-      <button 
-        className="fixed bottom-6 left-6 bg-yellow-500 text-white p-4 rounded-full shadow-lg hover:bg-yellow-600 transition-all duration-300 transform hover:scale-110 z-50"
-        onClick={() => {/* تفعيل المحادثة المباشرة */}}
-        aria-label="Live Chat"
+      {/* Chatbot Button */}
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={() => setIsChatOpen(!isChatOpen)}
+        className="fixed bottom-6 left-6 bg-yellow-500 p-4 rounded-full shadow-lg hover:bg-yellow-600 transition-all duration-300 z-50 flex items-center justify-center gap-2 group"
+        aria-label="فتح المحادثة"
       >
-        <MessageCircle className="w-6 h-6" />
-      </button>
+        <span className="text-white text-2xl group-hover:rotate-12 transition-transform duration-300">💬</span>
+        <span className="text-white font-medium hidden md:block">المساعد الذكي</span>
+      </motion.button>
+
+      {/* Chatbot Box */}
+      <AnimatePresence>
+        {isChatOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+            className="fixed bottom-24 left-6 w-80 md:w-96 bg-white rounded-lg shadow-2xl z-50 overflow-hidden border border-gray-100"
+          >
+            <div className="bg-yellow-500 py-3 px-4 flex justify-between items-center">
+              <button
+                onClick={() => setIsChatOpen(false)}
+                className="text-white hover:text-gray-200 transition-colors duration-300"
+              >
+                <X className="h-6 w-6" />
+              </button>
+              <h3 className="text-lg font-bold text-white">المُساعد الذكي</h3>
+              <div className="h-6 w-6"></div>
+            </div>
+            <div className="h-80 overflow-y-auto bg-gray-50 p-3">
+              {messages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`p-3 my-2 rounded-lg max-w-4/5 ${
+                    msg.role === 'user'
+                      ? 'bg-yellow-500 text-white mr-auto ml-0'
+                      : 'bg-white border border-gray-200 ml-auto mr-0'
+                  }`}
+                  style={{ maxWidth: '75%' }}
+                >
+                  {msg.content}
+                </div>
+              ))}
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-white border border-gray-200 rounded-lg p-3">
+                    <div className="animate-spin h-5 w-5 border-2 border-yellow-500 border-t-transparent rounded-full"></div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <form onSubmit={handleChatSubmit} className="p-3 border-t border-gray-100 bg-white">
+              <div className="flex">
+                <input
+                  type="text"
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  className="flex-grow p-2 border rounded-r-lg border-gray-200 focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 transition-all duration-300 bg-gray-50"
+                  placeholder="اكتب رسالتك هنا..."
+                  dir="rtl"
+                />
+                <button
+                  type="submit"
+                  disabled={isLoading || !inputMessage.trim()}
+                  className="bg-yellow-500 text-white p-2 rounded-l-lg hover:bg-yellow-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  <Send className="h-6 w-6 transform rotate-180" />
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

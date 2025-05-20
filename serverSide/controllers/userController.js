@@ -4,6 +4,9 @@ const User = require("../models/User");
 const multer = require("multer");
 const path = require("path");
 const Joi = require("joi");
+const { OAuth2Client } = require('google-auth-library');
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -416,5 +419,63 @@ exports.getRentalHistory = async (req, res) => {
   } catch (error) {
     console.error("خطأ في جلب سجل التأجير:", error);
     res.status(500).json({ message: "حدث خطأ أثناء جلب سجل التأجير" });
+  }
+};
+
+exports.googleLogin = async (req, res) => {
+  try {
+    const { credential } = req.body;
+    
+    // التحقق من صحة التوكن
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+
+    const payload = ticket.getPayload();
+    const { email, name, picture } = payload;
+
+    // البحث عن المستخدم أو إنشاء مستخدم جديد
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // إنشاء مستخدم جديد
+      user = new User({
+        email,
+        name,
+        profilePicture: picture,
+        role: "customer", // تعيين الدور كزبون عادي
+        password: Math.random().toString(36).slice(-8) // كلمة مرور عشوائية
+      });
+      await user.save();
+    }
+
+    // إنشاء JWT token
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    // تعيين الكوكي
+    res.cookie("authToken", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 3600000, // ساعة واحدة
+    });
+
+    res.status(200).json({
+      message: "تم تسجيل الدخول بنجاح",
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profilePicture: user.profilePicture
+      }
+    });
+  } catch (error) {
+    console.error("خطأ في تسجيل الدخول باستخدام Google:", error);
+    res.status(500).json({ message: "فشل تسجيل الدخول باستخدام Google" });
   }
 };

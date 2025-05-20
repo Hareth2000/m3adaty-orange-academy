@@ -13,7 +13,7 @@
     "@google/generative-ai": "^0.24.0",
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
-    "@react-oauth/google": "^0.12.1",
+    "@react-oauth/google": "^0.12.2",
     "@tailwindcss/vite": "^4.0.13",
     "aos": "^2.3.4",
     "axios": "^1.8.3",

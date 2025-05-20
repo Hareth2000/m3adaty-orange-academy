@@ -481,7 +481,7 @@ const EquipmentCategoryPage = () => {
         <div className="flex justify-between items-center">
           <div className="flex items-center">
             <span className="font-medium text-gray-800">
-              {pagination.totalItems || 0} معدة متوفرة
+              {equipment.filter(item => item.availability).length} معدة متوفرة
             </span>
             {searchTerm && (
               <span className="mr-2 text-gray-500">
@@ -491,7 +491,14 @@ const EquipmentCategoryPage = () => {
           </div>
           <div className="text-sm text-gray-500 flex items-center">
             <Clock className="ml-1 h-4 w-4" />
-            <span>آخر تحديث: اليوم</span>
+            <span>آخر تحديث: {new Date().toLocaleDateString('ar', { 
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}</span>
           </div>
         </div>
       </div>
@@ -692,7 +699,7 @@ const EquipmentCategoryPage = () => {
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
         className="fixed bottom-6 right-6 bg-yellow-500 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:bg-yellow-600 transition-all"
       >
-        <ArrowRight className="h-5 w-5" />
+        <ArrowLeft className="h-5 w-5 rotate-90" />
       </button>
     </div>
   );
