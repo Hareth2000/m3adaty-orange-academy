@@ -76,26 +76,28 @@ const PartnerProfile = () => {
           params: {
             ownerId: ownerId,
             page: rentalPagination.currentPage,
-            limit: rentalPagination.limit
+            limit: 5, // عرض 5 طلبات في الصفحة
           }
         }
       );
-      
-      if (Array.isArray(res.data)) {
-        setRentalRequests(res.data);
-        // إذا كان لدينا معلومات عن إجمالي عدد الصفحات، نستخدمها
-        if (res.headers['x-total-pages']) {
-          setRentalPagination(prev => ({
-            ...prev,
-            totalPages: parseInt(res.headers['x-total-pages']) || 1,
-          }));
-        }
+      let data = Array.isArray(res.data) ? res.data : [];
+      // ترتيب من الأحدث للأقدم
+      data = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setRentalRequests(data);
+      // إذا كان لدينا معلومات عن إجمالي عدد الصفحات، نستخدمها
+      if (res.headers['x-total-pages']) {
+        setRentalPagination(prev => ({
+          ...prev,
+          totalPages: parseInt(res.headers['x-total-pages']) || 1,
+        }));
       } else {
-        console.error("Invalid response format:", res.data);
-        setRentalRequests([]);
+        // حساب عدد الصفحات يدويًا إذا لم يوجد هيدر
+        setRentalPagination(prev => ({
+          ...prev,
+          totalPages: Math.ceil(data.length / 5) || 1,
+        }));
       }
     } catch (err) {
-      console.error("Error fetching rental requests:", err);
       setRentalRequests([]);
       toast.error("فشل في جلب طلبات التأجير");
     }
@@ -847,13 +849,8 @@ const PartnerProfile = () => {
                             {item.availability ? "متاحة" : "غير متاحة"}
                           </div>
                           <div className="absolute bottom-3 right-3 flex items-center bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm">
-                            <DollarSign className="h-4 w-4 ml-1 text-yellow-600" />
-                            <span className="font-bold text-yellow-600">
-                              {item.dailyRate}
-                            </span>
-                            <span className="text-xs text-gray-500 mr-1">
-                              / يوم
-                            </span>
+                            <span className="font-bold text-yellow-600">{item.dailyRate}</span>
+                            <span className="text-xs text-gray-500 mr-1">/ يوم</span>
                           </div>
                         </div>
                         <div className="p-5">
@@ -1025,6 +1022,12 @@ const PartnerProfile = () => {
                             scope="col"
                             className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
                           >
+                            صورة الهوية
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
                             تاريخ البدء
                           </th>
                           <th
@@ -1048,113 +1051,132 @@ const PartnerProfile = () => {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {rentalRequests.map((rental) => {
-                          const start = new Date(rental.startDate);
-                          const end = new Date(rental.endDate);
-                          return (
-                            <tr key={rental._id} className="hover:bg-gray-50">
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center">
-                                  <div className="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-700 font-medium mr-3">
-                                    {rental.user?.name
-                                      ?.charAt(0)
-                                      .toUpperCase() || "؟"}
-                                  </div>
-                                  <div>
-                                    <div className="text-sm font-medium text-gray-900">
-                                      {rental.user?.name}
+                        {rentalRequests
+                          .slice((rentalPagination.currentPage - 1) * 5, rentalPagination.currentPage * 5)
+                          .map((rental) => {
+                            const start = new Date(rental.startDate);
+                            const end = new Date(rental.endDate);
+                            return (
+                              <tr key={rental._id} className="hover:bg-gray-50">
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="flex items-center">
+                                    <div className="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-700 font-medium mr-3">
+                                      {rental.user?.name
+                                        ?.charAt(0)
+                                        .toUpperCase() || "؟"}
                                     </div>
-                                    <div className="text-xs text-gray-500">
-                                      {rental.user?.email}
+                                    <div>
+                                      <div className="text-sm font-medium text-gray-900">
+                                        {rental.user?.name}
+                                      </div>
+                                      <div className="text-xs text-gray-500">
+                                        {rental.user?.email}
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm text-gray-900">
-                                  {rental.equipment?.title}
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm text-gray-900 flex items-center">
-                                  <Clock
-                                    size={14}
-                                    className="ml-1 text-gray-400"
-                                  />
-                                  {start.toLocaleDateString("ar-EG")}
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm text-gray-900 flex items-center">
-                                  <Clock
-                                    size={14}
-                                    className="ml-1 text-gray-400"
-                                  />
-                                  {end.toLocaleDateString("ar-EG")}
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                {rental.status === "pending" && (
-                                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                    قيد المراجعة
-                                  </span>
-                                )}
-                                {rental.status === "accepted" && (
-                                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                    مقبول
-                                  </span>
-                                )}
-                                {rental.status === "rejected" && (
-                                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                    مرفوض
-                                  </span>
-                                )}
-                                {rental.status === "paid" && (
-                                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                    مدفوع
-                                  </span>
-                                )}
-                                {rental.status === "cancelled" && (
-                                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-700">
-                                    ملغي
-                                  </span>
-                                )}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                {rental.status === "pending" ? (
-                                  <div className="space-x-1 space-x-reverse">
-                                    <button
-                                      onClick={() =>
-                                        handleRentalDecision(
-                                          rental._id,
-                                          "accepted"
-                                        )
-                                      }
-                                      className="px-2 py-1 text-sm bg-green-100 text-green-800 rounded hover:bg-green-200 transition-colors"
-                                    >
-                                      قبول
-                                    </button>
-                                    <button
-                                      onClick={() =>
-                                        handleRentalDecision(
-                                          rental._id,
-                                          "rejected"
-                                        )
-                                      }
-                                      className="px-2 py-1 text-sm bg-red-100 text-red-800 rounded hover:bg-red-200 transition-colors"
-                                    >
-                                      رفض
-                                    </button>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm text-gray-900">
+                                    {rental.equipment?.title}
                                   </div>
-                                ) : (
-                                  <span className="text-gray-400 text-xs">
-                                    لا توجد إجراءات
-                                  </span>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  {rental.idImage ? (
+                                    <button
+                                      onClick={() => window.open(`http://localhost:5000/${rental.idImage}`, '_blank')}
+                                      className="text-yellow-600 hover:text-yellow-700 text-sm font-medium"
+                                    >
+                                      عرض الصورة
+                                    </button>
+                                  ) : (
+                                    <span className="text-gray-400 text-sm">غير متوفر</span>
+                                  )}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm text-gray-900 flex items-center">
+                                    <Clock
+                                      size={14}
+                                      className="ml-1 text-gray-400"
+                                    />
+                                    {start.toLocaleDateString("ar-EG")}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm text-gray-900 flex items-center">
+                                    <Clock
+                                      size={14}
+                                      className="ml-1 text-gray-400"
+                                    />
+                                    {end.toLocaleDateString("ar-EG")}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  {rental.status === "pending" && (
+                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                      قيد المراجعة
+                                    </span>
+                                  )}
+                                  {rental.status === "accepted" && (
+                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                      مقبول
+                                    </span>
+                                  )}
+                                  {rental.status === "rejected" && (
+                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                      مرفوض
+                                    </span>
+                                  )}
+                                  {rental.status === "paid" && (
+                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                      مدفوع
+                                    </span>
+                                  )}
+                                  {rental.status === "completed" && (
+                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-200 text-gray-800">
+                                      مكتمل
+                                    </span>
+                                  )}
+                                  {rental.status === "cancelled" && (
+                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-700">
+                                      ملغي
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  {rental.status === "pending" ? (
+                                    <div className="space-x-1 space-x-reverse">
+                                      <button
+                                        onClick={() =>
+                                          handleRentalDecision(
+                                            rental._id,
+                                            "accepted"
+                                          )
+                                        }
+                                        className="px-2 py-1 text-sm bg-green-100 text-green-800 rounded hover:bg-green-200 transition-colors"
+                                      >
+                                        قبول
+                                      </button>
+                                      <button
+                                        onClick={() =>
+                                          handleRentalDecision(
+                                            rental._id,
+                                            "rejected"
+                                          )
+                                        }
+                                        className="px-2 py-1 text-sm bg-red-100 text-red-800 rounded hover:bg-red-200 transition-colors"
+                                      >
+                                        رفض
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <span className="text-gray-400 text-xs">
+                                      لا توجد إجراءات
+                                    </span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
                       </tbody>
                     </table>
                   </div>

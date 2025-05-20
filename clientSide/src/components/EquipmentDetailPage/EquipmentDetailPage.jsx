@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -70,6 +70,8 @@ export default function EquipmentDetailPage() {
   // ----------------------------------
   // المواقيت المحجوزة
   const [bookedDates, setBookedDates] = useState([]);
+
+  const navigate = useNavigate();
 
   // ----------------------------------
   // جلب بيانات صفحة التفاصيل عند الدخول
@@ -389,6 +391,10 @@ export default function EquipmentDetailPage() {
   };
 
   const handleDateChange = (type, value) => {
+    if (isDateBooked(value)) {
+      toast.error("اليوم الذي اخترته محجوز مسبقاً، يرجى اختيار يوم آخر.");
+      return;
+    }
     if (type === 'start') {
       setStartDate(value);
       if (endDate) {
@@ -402,13 +408,24 @@ export default function EquipmentDetailPage() {
     }
   };
 
-  // إضافة دالة للتحقق من التواريخ المحجوزة
+  const isSameDay = (d1, d2) => {
+    return d1.getFullYear() === d2.getFullYear() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getDate() === d2.getDate();
+  };
+
   const isDateBooked = (date) => {
+    // نمر على كل فترة حجز
     return bookedDates.some(bookedDate => {
       const bookedStart = new Date(bookedDate.startDate);
       const bookedEnd = new Date(bookedDate.endDate);
-      const checkDate = new Date(date);
-      return checkDate >= bookedStart && checkDate <= bookedEnd;
+      // نمر على كل يوم في الفترة
+      let d = new Date(bookedStart);
+      while (d <= bookedEnd) {
+        if (isSameDay(d, date)) return true;
+        d.setDate(d.getDate() + 1);
+      }
+      return false;
     });
   };
 
@@ -420,41 +437,85 @@ export default function EquipmentDetailPage() {
     }));
   };
 
+  const [formData, setFormData] = useState({
+    name: "",
+    role: "",
+    company: "",
+    content: "",
+    rating: 5
+  });
+
+  // إضافة حقل الهوية
+  const [idImage, setIdImage] = useState(null);
+  const [idImagePreview, setIdImagePreview] = useState(null);
+
+  const handleIdImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setIdImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setIdImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleRentalSubmit = async (e) => {
     e.preventDefault();
     if (!userId) {
       toast.error("يجب تسجيل الدخول أولاً!");
       return;
     }
-
+    if (!idImage) {
+      toast.error("يجب رفع صورة الهوية");
+      return;
+    }
+    if (!calculatedPrice) {
+      toast.error("يجب تحديد فترة التأجير ليتم حساب السعر");
+      return;
+    }
     try {
+      const formData = new FormData();
+      formData.append('userId', userId);
+      formData.append('equipmentId', id);
+      formData.append('startDate', startDate);
+      formData.append('endDate', endDate);
+      formData.append('phoneNumber', phoneNumber);
+      formData.append('address', address);
+      formData.append('price', calculatedPrice);
+      if (idImage) {
+        formData.append('idImage', idImage);
+      }
+      // Debug: Print all formData entries
+      for (let pair of formData.entries()) {
+        console.log(pair[0]+ ', ' + pair[1]);
+      }
       const response = await axios.post(
         "http://localhost:5000/api/rentals",
-        {
-          userId: userId,
-          equipmentId: id, // معرف المعدة
-          startDate,
-          endDate,
-          phoneNumber,
-          address,
-          price: calculatedPrice,
-        },
-        { withCredentials: true }
+        formData,
+        { 
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
       );
-
       toast.success(response.data.message || "تم إنشاء طلب التأجير بنجاح");
-
       // إعادة تعيين الحقول
       setStartDate("");
       setEndDate("");
       setPhoneNumber("");
       setAddress("");
+      setIdImage(null);
+      setIdImagePreview(null);
       setShowRentalRequest(false);
     } catch (error) {
       console.error("خطأ في إنشاء طلب التأجير:", error);
-
       if (error.response?.status === 409) {
         toast.error("⚠️ الفترة المطلوبة محجوزة بالفعل. يرجى اختيار فترة أخرى.");
+      } else if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
       } else {
         toast.error("حدث خطأ في إرسال طلب التأجير");
       }
@@ -854,16 +915,35 @@ export default function EquipmentDetailPage() {
           <h2 className="text-xl font-bold mb-4">معدات مشابهة</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {similarEquipment.map((item) => (
-              <div key={item._id} className="border p-4 rounded">
-                <img
-                  src={`http://localhost:5000/${item.mainImage}`}
-                  alt={item.title}
-                  className="w-full h-48 object-cover mb-2"
-                />
-                <h3 className="text-lg font-semibold">{item.title}</h3>
-                <p className="text-gray-600">
-                  سعر اليوم: {item.dailyRate} دينار
-                </p>
+              <div
+                key={item._id}
+                className="group bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1"
+                onClick={() => navigate(`/equipment/${item._id}`)}
+              >
+                <div className="relative h-40 overflow-hidden">
+                  <img
+                    src={`http://localhost:5000/${item.mainImage}`}
+                    alt={item.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 rounded text-xs shadow">
+                    {item.year}
+                  </div>
+                </div>
+                <div className="p-4">
+                  <h3 className="font-bold text-lg mb-2 text-gray-800 group-hover:text-yellow-600 transition-colors line-clamp-1">
+                    {item.title}
+                  </h3>
+                  <div className="flex items-center text-sm text-gray-600 mb-2">
+                    <span className="bg-yellow-50 p-1 rounded mr-2 text-yellow-500 font-bold text-xs">{item.manufacturer}</span>
+                    <span className="mx-1 text-gray-300">•</span>
+                    <span>{item.model}</span>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="font-bold text-yellow-600 text-lg">{item.dailyRate} <span className="text-xs">دينار/يوم</span></span>
+                    <span className="text-gray-400 text-xs">#{item._id.slice(-4)}</span>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -927,8 +1007,11 @@ export default function EquipmentDetailPage() {
                     renderDayContents={(day, date) => {
                       const isBooked = isDateBooked(date);
                       return (
-                        <div className={`${isBooked ? 'bg-red-100 text-red-500' : ''} p-1`}>
+                        <div className={`relative ${isBooked ? 'bg-red-100 text-red-500 font-bold' : ''} p-1` }>
                           {day}
+                          {isBooked && (
+                            <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-[10px] text-red-500">محجوز</span>
+                          )}
                         </div>
                       );
                     }}
@@ -955,8 +1038,11 @@ export default function EquipmentDetailPage() {
                     renderDayContents={(day, date) => {
                       const isBooked = isDateBooked(date);
                       return (
-                        <div className={`${isBooked ? 'bg-red-100 text-red-500' : ''} p-1`}>
+                        <div className={`relative ${isBooked ? 'bg-red-100 text-red-500 font-bold' : ''} p-1` }>
                           {day}
+                          {isBooked && (
+                            <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-[10px] text-red-500">محجوز</span>
+                          )}
                         </div>
                       );
                     }}
@@ -1003,6 +1089,71 @@ export default function EquipmentDetailPage() {
                   placeholder="أدخل عنوانك الكامل"
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-800 mb-2">
+                  صورة الهوية
+                </label>
+                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
+                  <div className="space-y-1 text-center">
+                    {idImagePreview ? (
+                      <div className="relative">
+                        <img
+                          src={idImagePreview}
+                          alt="معاينة صورة الهوية"
+                          className="mx-auto h-32 w-auto object-contain"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIdImage(null);
+                            setIdImagePreview(null);
+                          }}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <svg
+                          className="mx-auto h-12 w-12 text-gray-400"
+                          stroke="currentColor"
+                          fill="none"
+                          viewBox="0 0 48 48"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                            strokeWidth={2}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                        <div className="flex text-sm text-gray-600">
+                          <label
+                            htmlFor="id-image"
+                            className="relative cursor-pointer bg-white rounded-md font-medium text-yellow-600 hover:text-yellow-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-yellow-500"
+                          >
+                            <span>رفع صورة</span>
+                            <input
+                              id="id-image"
+                              name="id-image"
+                              type="file"
+                              className="sr-only"
+                              accept="image/*"
+                              onChange={handleIdImageChange}
+                              required
+                            />
+                          </label>
+                          <p className="mr-1">أو اسحب وأفلت</p>
+                        </div>
+                        <p className="text-xs text-gray-500">PNG, JPG حتى 5MB</p>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 mt-6">

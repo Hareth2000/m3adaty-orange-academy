@@ -144,11 +144,12 @@ exports.getAllEquipment = async (req, res) => {
     let { page, limit, category, search, minPrice, maxPrice, sortBy } = req.query;
 
     page = parseInt(page) || 1;
-    limit = parseInt(limit) || 12;
+    limit = parseInt(limit) || 8;
     let query = {};
 
     if (category && category !== "الكل") query.category = category;
     if (search) query.title = { $regex: search, $options: "i" };
+    if (req.query.location) query.location = { $regex: req.query.location, $options: "i" };
     
     // إدارة نطاق السعر
     if (minPrice || maxPrice) {

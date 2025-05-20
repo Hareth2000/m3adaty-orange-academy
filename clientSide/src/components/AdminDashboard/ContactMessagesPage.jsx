@@ -112,7 +112,7 @@ const ContactMessagesPage = () => {
     try {
       const rows = [
         ["الاسم", "البريد الإلكتروني", "الموضوع", "الرسالة", "التاريخ"],
-        ...filteredMessages.map(message => [
+        ...messages.map(message => [
           message.name || "",
           message.email || "",
           message.subject || "",

@@ -182,8 +182,20 @@ exports.updateUserProfile = async (req, res) => {
   }
 };
 
-exports.logoutUser = (req, res) => {
-  res.clearCookie("authToken").status(200).json({ message: "تم تسجيل الخروج" });
+exports.logoutUser = async (req, res) => {
+  try {
+    // مسح الكوكيز
+    res.clearCookie('authToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict'
+    });
+
+    res.status(200).json({ message: 'تم تسجيل الخروج بنجاح' });
+  } catch (error) {
+    console.error('خطأ في تسجيل الخروج:', error);
+    res.status(500).json({ message: 'حدث خطأ أثناء تسجيل الخروج' });
+  }
 };
 
 exports.getUserFromToken = async (req, res) => {

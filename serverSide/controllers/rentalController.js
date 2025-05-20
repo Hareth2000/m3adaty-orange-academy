@@ -10,85 +10,30 @@ const isOverlapping = (existingStart, existingEnd, newStart, newEnd) => {
   );
 };
 
-// // إنشاء طلب تأجير جديد
-// const createRental = async (req, res) => {
-//   try {
-//     const { userId, equipmentId, startDate, endDate, phoneNumber, address } =
-//       req.body;
-
-//     // التحقق من البيانات الأساسية
-//     if (!userId || !equipmentId || !startDate || !endDate) {
-//       return res.status(400).json({ message: "بيانات مفقودة" });
-//     }
-
-//     const newStart = new Date(startDate);
-//     const newEnd = new Date(endDate);
-
-//     // التحقق من وجود أي حجز مقبول ومتداخل مع الفترة المطلوبة
-//     const existingRentals = await Rental.find({
-//       equipment: equipmentId,
-//       status: "accepted",
-//     });
-
-//     for (const rental of existingRentals) {
-//       const existingStart = new Date(rental.startDate);
-//       const existingEnd = new Date(rental.endDate);
-
-//       if (isOverlapping(existingStart, existingEnd, newStart, newEnd , price )) {
-//         return res
-//           .status(409)
-//           .json({ message: "الفترة المطلوبة محجوزة مسبقًا." });
-//       }
-//     }
-
-//     // إنشاء الطلب الجديد
-//     const newRental = new Rental({
-//       user: userId,
-//       equipment: equipmentId,
-//       startDate: newStart,
-//       endDate: newEnd,
-//       phoneNumber,
-//       address,
-//       price,
-//       status: "pending",
-//     });
-
-//     await newRental.save();
-
-//     res.status(201).json({
-//       message: "تم إنشاء طلب التأجير بنجاح",
-//       rentalId: newRental._id,
-//     });
-//   } catch (error) {
-//     console.error("خطأ في إنشاء طلب التأجير:", error);
-//     res.status(500).json({ message: "حدث خطأ عند إنشاء طلب التأجير" });
-//   }
-// };
-
 // إنشاء طلب تأجير جديد
 const createRental = async (req, res) => {
   try {
-    const { userId, equipmentId, startDate, endDate, phoneNumber, address, price } = req.body; // أضفنا 'price'
+    const { userId, equipmentId, startDate, endDate, phoneNumber, address, price } = req.body;
+    const idImage = req.file ? req.file.path : null;
 
     // التحقق من البيانات الأساسية
-    if (!userId || !equipmentId || !startDate || !endDate || !price) { // تحقق من السعر هنا
+    if (!userId || !equipmentId || !startDate || !endDate || !price || !idImage) {
       return res.status(400).json({ message: "بيانات مفقودة" });
     }
 
     const newStart = new Date(startDate);
     const newEnd = new Date(endDate);
 
-    // التحقق من وجود أي حجز مقبول ومتداخل مع الفترة المطلوبة
+    // التحقق من وجود أي حجز مقبول أو قيد الانتظار ومتداخل مع الفترة المطلوبة
     const existingRentals = await Rental.find({
       equipment: equipmentId,
-      status: "accepted",
+      status: { $in: ["accepted", "pending"] },
     });
 
     for (const rental of existingRentals) {
       const existingStart = new Date(rental.startDate);
       const existingEnd = new Date(rental.endDate);
 
-      // دالة التحقق من التداخل بين التواريخ
       if (isOverlapping(existingStart, existingEnd, newStart, newEnd)) {
         return res
           .status(409)
@@ -104,7 +49,8 @@ const createRental = async (req, res) => {
       endDate: newEnd,
       phoneNumber,
       address,
-      price, // أضفنا السعر هنا
+      idImage,
+      price,
       status: "pending",
     });
 
@@ -190,10 +136,10 @@ const getBookedDates = async (req, res) => {
   try {
     const { equipmentId } = req.params;
 
-    // جلب جميع طلبات التأجير المقبولة لهذه المعدة
+    // جلب جميع طلبات التأجير المقبولة أو قيد الانتظار أو مدفوعة أو مكتملة لهذه المعدة
     const rentals = await Rental.find({
       equipment: equipmentId,
-      status: { $in: ["accepted", "pending"] },
+      status: { $in: ["accepted", "pending", "paid", "completed"] },
     }).select("startDate endDate");
 
     // تحويل التواريخ إلى التنسيق المطلوب

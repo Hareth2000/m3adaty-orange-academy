@@ -6,6 +6,7 @@ const Payment = require("../models/Payment");
 const ContactMessage = require("../models/ContactMessage");
 const Notification = require('../models/Notification');
 const sendEmail = require('../utils/sendEmail');
+const nodemailer = require('nodemailer');
 
 // Dashboard Stats
 const getStats = async (req, res) => {
@@ -235,5 +236,5 @@ module.exports = {
   approvePartner,
   rejectPartner,
   getAllPayments,
-  getAllMessages,
+  getAllMessages
 };

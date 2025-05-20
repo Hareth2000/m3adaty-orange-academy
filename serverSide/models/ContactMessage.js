@@ -22,6 +22,13 @@ const contactMessageSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  reply: {
+    type: String,
+    default: '',
+  },
+  repliedAt: {
+    type: Date,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

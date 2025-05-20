@@ -51,13 +51,30 @@ const StatsPage = () => {
           withCredentials: true,
         });
         setStats(res.data);
+        // بيانات وهمية افتراضية إذا لم توجد بيانات من السيرفر
+        if (res.data.weeklyStats && res.data.weeklyStats.length > 0) {
+          setMonthlyStats(res.data.weeklyStats);
+        } else {
+          setMonthlyStats([
+            { name: "الأسبوع 1", المستخدمين: 5, المعدات: 2, الطلبات: 1, المدفوعات: 0 },
+            { name: "الأسبوع 2", المستخدمين: 8, المعدات: 3, الطلبات: 2, المدفوعات: 1 },
+            { name: "الأسبوع 3", المستخدمين: 12, المعدات: 5, الطلبات: 4, المدفوعات: 2 },
+            { name: "الأسبوع 4", المستخدمين: 15, المعدات: 7, الطلبات: 6, المدفوعات: 3 },
+          ]);
+        }
         setIsLoading(false);
       } catch (err) {
         console.error("Error fetching stats", err);
+        // بيانات وهمية افتراضية في حالة الخطأ
+        setMonthlyStats([
+          { name: "الأسبوع 1", المستخدمين: 5, المعدات: 2, الطلبات: 1, المدفوعات: 0 },
+          { name: "الأسبوع 2", المستخدمين: 8, المعدات: 3, الطلبات: 2, المدفوعات: 1 },
+          { name: "الأسبوع 3", المستخدمين: 12, المعدات: 5, الطلبات: 4, المدفوعات: 2 },
+          { name: "الأسبوع 4", المستخدمين: 15, المعدات: 7, الطلبات: 6, المدفوعات: 3 },
+        ]);
         setIsLoading(false);
       }
     };
-
     fetchStats();
   }, []);
 
@@ -272,8 +289,8 @@ const StatsPage = () => {
       {/* Summary Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="bg-yellow-50 border border-yellow-100 rounded-xl p-4 flex items-center">
-          <div className="bg-yellow-100 p-3 rounded-full">
-            <Users className="text-yellow-600" size={24} />
+          <div className="bg-yellow-100 p-3 rounded-full flex items-center justify-center">
+            <Users className="w-6 h-6 text-yellow-500" />
           </div>
           <div className="mr-4">
             <h3 className="text-sm text-gray-500">إجمالي المستخدمين</h3>
@@ -282,20 +299,18 @@ const StatsPage = () => {
         </div>
 
         <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-center">
-          <div className="bg-blue-100 p-3 rounded-full">
-            <PackageCheck className="text-blue-600" size={24} />
+          <div className="bg-blue-100 p-3 rounded-full flex items-center justify-center">
+            <PackageCheck className="w-6 h-6 text-blue-500" />
           </div>
           <div className="mr-4">
             <h3 className="text-sm text-gray-500">عدد المعدات</h3>
-            <p className="text-2xl font-bold text-gray-800">
-              {stats.equipment}
-            </p>
+            <p className="text-2xl font-bold text-gray-800">{stats.equipment}</p>
           </div>
         </div>
 
         <div className="bg-green-50 border border-green-100 rounded-xl p-4 flex items-center">
-          <div className="bg-green-100 p-3 rounded-full">
-            <CreditCard className="text-green-600" size={24} />
+          <div className="bg-green-100 p-3 rounded-full flex items-center justify-center">
+            <CreditCard className="w-6 h-6 text-green-500" />
           </div>
           <div className="mr-4">
             <h3 className="text-sm text-gray-500">إجمالي المدفوعات</h3>
@@ -358,13 +373,13 @@ const StatsPage = () => {
 
       {/* Line and Pie Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* IMPROVED Line Chart: Monthly Trends */}
+        {/* IMPROVED Line Chart: Weekly Trends */}
         <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold mb-4">التطور الشهري</h3>
+          <h3 className="text-lg font-semibold mb-4">التطور الأسبوعي</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
-                data={monthlyStats.slice(-6)} // Show only last 6 months for better visualization
+                data={monthlyStats.length > 0 ? monthlyStats : [{ name: 'لا توجد بيانات', المستخدمين: 0, المعدات: 0, الطلبات: 0, المدفوعات: 0 }]}
                 margin={{ top: 10, right: 10, left: 10, bottom: 30 }}
               >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />

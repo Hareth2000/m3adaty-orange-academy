@@ -17,6 +17,7 @@ const RentalSchema = new mongoose.Schema(
     endDate: { type: Date, required: true },
     phoneNumber: { type: String, required: true },
     address: { type: String, required: true },
+    idImage: { type: String },
     status: {
       // أضفنا accepted و rejected
       type: String,

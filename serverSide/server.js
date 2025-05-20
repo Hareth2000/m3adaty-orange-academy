@@ -5,6 +5,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const path = require("path");
+const fs = require('fs');
 
 const userRoutes = require("./routes/userRoutes");
 const equipmentRoutes = require("./routes/equipmentRoutes");
@@ -33,8 +34,17 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    exposedHeaders: ["Set-Cookie"],
   })
 );
+
+// إضافة headers أمنية
+app.use((req, res, next) => {
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+});
 
 // المجلد العمومي للملفات الثابتة
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -56,6 +66,12 @@ mongoose
   })
   .then(() => console.log("✅ mongoDB is connected"))
   .catch((err) => console.log("❌ خطأ في اتصال MongoDB:", err));
+
+// Ensure uploads/id-images directory exists
+const uploadsDir = path.join(__dirname, 'uploads', 'id-images');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 // ربط مسارات API
 app.use("/api/users", userRoutes);
