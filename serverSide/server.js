@@ -39,6 +39,9 @@ app.use(
 // المجلد العمومي للملفات الثابتة
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+// خدمة ملفات الفيديو الثابتة
+app.use("/videos", express.static(path.join(__dirname, "videos")))
+
 // وسيط لسجلات الطلبات
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
@@ -51,7 +54,7 @@ mongoose
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => console.log("✅ MongoDB متصل بنجاح"))
+  .then(() => console.log("✅ mongoDB is connected"))
   .catch((err) => console.log("❌ خطأ في اتصال MongoDB:", err));
 
 // ربط مسارات API
@@ -84,5 +87,5 @@ app.use((req, res) => {
 // بدء تشغيل الخادم
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 السيرفر يعمل على المنفذ ${PORT}`);
+  console.log(`🚀 connect to server is Done ${PORT}`);
 });

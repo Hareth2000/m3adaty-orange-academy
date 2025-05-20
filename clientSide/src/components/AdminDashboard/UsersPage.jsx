@@ -64,7 +64,7 @@ const UsersPage = () => {
   };
 
   const toggleRole = async (id, userName, currentRole) => {
-    const newRole = currentRole === "admin" ? "مستخدم" : "مشرف";
+    const newRole = currentRole === "partner" ? "زبون" : "شريك";
     const result = await Swal.fire({
       title: 'تغيير الدور',
       text: `هل تريد تغيير دور ${userName} إلى ${newRole}؟`,
@@ -110,14 +110,14 @@ const UsersPage = () => {
       (user?.email?.toLowerCase() || '').includes(searchTerm.toLowerCase());
     
     const matchesFilter = filter === "all" || 
-                         (filter === "admin" && user?.role === "admin") ||
-                         (filter === "user" && user?.role !== "admin");
+                         (filter === "partner" && user?.role === "partner") ||
+                         (filter === "customer" && user?.role === "customer");
     
     return matchesSearch && matchesFilter;
   });
 
   const getRoleBadgeColor = (role) => {
-    return role === "admin" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800";
+    return role === "partner" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800";
   };
 
   const getPartnerStatusBadgeColor = (status) => {
@@ -155,8 +155,8 @@ const UsersPage = () => {
               className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-right bg-gray-50"
             >
               <option value="all">جميع المستخدمين</option>
-              <option value="admin">المشرفين</option>
-              <option value="user">المستخدمين</option>
+              <option value="partner">الشركاء</option>
+              <option value="customer">الزبائن</option>
             </select>
           </div>
         </div>
@@ -178,26 +178,26 @@ const UsersPage = () => {
         <div className="bg-white rounded-xl shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">المشرفين</p>
+              <p className="text-sm text-gray-500">الشركاء</p>
               <p className="text-2xl font-bold text-gray-800 mt-1">
-                {users.filter(user => user.role === "admin").length}
+                {users.filter(user => user.role === "partner").length}
               </p>
             </div>
-            <div className="bg-blue-100 p-3 rounded-full">
-              <Users className="text-blue-600" size={24} />
+            <div className="bg-purple-100 p-3 rounded-full">
+              <Users className="text-purple-600" size={24} />
             </div>
           </div>
         </div>
         <div className="bg-white rounded-xl shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">المستخدمين العاديين</p>
+              <p className="text-sm text-gray-500">الزبائن</p>
               <p className="text-2xl font-bold text-gray-800 mt-1">
-                {users.filter(user => user.role === "user").length}
+                {users.filter(user => user.role === "customer").length}
               </p>
             </div>
-            <div className="bg-green-100 p-3 rounded-full">
-              <Users className="text-green-600" size={24} />
+            <div className="bg-blue-100 p-3 rounded-full">
+              <Users className="text-blue-600" size={24} />
             </div>
           </div>
         </div>
@@ -209,8 +209,8 @@ const UsersPage = () => {
                 {users.filter(user => user.partnerStatus === "pending").length}
               </p>
             </div>
-            <div className="bg-purple-100 p-3 rounded-full">
-              <Users className="text-purple-600" size={24} />
+            <div className="bg-green-100 p-3 rounded-full">
+              <Users className="text-green-600" size={24} />
             </div>
           </div>
         </div>
@@ -250,7 +250,7 @@ const UsersPage = () => {
                     <td className="p-4 text-gray-600">{user.email}</td>
                     <td className="p-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
-                        {user.role === "admin" ? "مشرف" : "مستخدم"}
+                        {user.role === "partner" ? "شريك" : "زبون"}
                       </span>
                     </td>
                     <td className="p-4">

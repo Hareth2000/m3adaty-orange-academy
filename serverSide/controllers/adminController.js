@@ -17,8 +17,26 @@ const getStats = async (req, res) => {
     const payments = await Payment.countDocuments();
     const messages = await ContactMessage.countDocuments();
 
-    res.json({ users, partnersPending, equipment, rentals, payments, messages });
+    // Get rental status counts
+    const rentalsPending = await Rental.countDocuments({ status: "pending" });
+    const rentalsAccepted = await Rental.countDocuments({ status: "accepted" });
+    const rentalsRejected = await Rental.countDocuments({ status: "rejected" });
+    const rentalsCompleted = await Rental.countDocuments({ status: "completed" });
+
+    res.json({ 
+      users, 
+      partnersPending, 
+      equipment, 
+      rentals, 
+      payments, 
+      messages,
+      rentalsPending,
+      rentalsAccepted,
+      rentalsRejected,
+      rentalsCompleted
+    });
   } catch (error) {
+    console.error('Stats error:', error);
     res.status(500).json({ message: "فشل في جلب الإحصائيات" });
   }
 };
@@ -45,10 +63,22 @@ const deleteUser = async (req, res) => {
 const toggleUserRole = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
-    user.role = user.role === "admin" ? "customer" : "admin";
+    if (!user) {
+      return res.status(404).json({ message: "المستخدم غير موجود" });
+    }
+
+    // Toggle between customer and partner roles
+    user.role = user.role === "partner" ? "customer" : "partner";
+    
+    // If changing to customer, reset partner status
+    if (user.role === "customer") {
+      user.partnerStatus = null;
+    }
+    
     await user.save();
     res.json({ message: "تم تغيير الدور" });
   } catch (err) {
+    console.error('Role toggle error:', err);
     res.status(500).json({ message: "فشل في تغيير الدور" });
   }
 };
@@ -129,21 +159,32 @@ const approvePartner = async (req, res) => {
       role: "partner",
       partnerStatus: "approved",
     }, { new: true });
+    
     if (!user) return res.status(404).json({ message: "المستخدم غير موجود" });
-    // إنشاء إشعار
-    await Notification.create({
-      user: user._id,
-      title: "تمت الموافقة على طلب الشراكة",
-      message: "تمت الموافقة على طلبك كشريك. الرجاء إكمال عملية الدفع لإتمام التفعيل."
-    });
-    // إرسال إيميل
-    await sendEmail(
-      user.email,
-      "تمت الموافقة على طلب الشراكة",
-      "تمت الموافقة على طلبك كشريك. الرجاء إكمال عملية الدفع لإتمام التفعيل."
-    );
+    
+    // Handle notifications separately to not affect the main approval process
+    try {
+      // إنشاء إشعار
+      await Notification.create({
+        user: user._id,
+        title: "تمت الموافقة على طلب الشراكة",
+        message: "تمت الموافقة على طلبك كشريك. الرجاء إكمال عملية الدفع لإتمام التفعيل."
+      });
+      
+      // إرسال إيميل
+      await sendEmail(
+        user.email,
+        "تمت الموافقة على طلب الشراكة",
+        "تمت الموافقة على طلبك كشريك. الرجاء إكمال عملية الدفع لإتمام التفعيل."
+      );
+    } catch (notificationError) {
+      console.error('Notification error:', notificationError);
+      // Continue with the response even if notifications fail
+    }
+    
     res.json({ message: "تمت الموافقة" });
   } catch (error) {
+    console.error('Approval error:', error);
     res.status(500).json({ message: "فشل في الموافقة" });
   }
 };

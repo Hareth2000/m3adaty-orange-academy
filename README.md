@@ -33,7 +33,7 @@ Businesses and individuals often can't afford the high costs of owning heavy equ
 
 | Layer       | Technology                     |
 |-------------|---------------------------------|
-| Frontend    | React JS, Redux, Tailwind CSS   |
+| Frontend    | React JS, Tailwind CSS   |
 | Backend     | Node.js, Express.js             |
 | Database    | MongoDB                         |
 | Tools       | GitHub, Trello, Figma           |
@@ -57,7 +57,7 @@ Businesses and individuals often can't afford the high costs of owning heavy equ
 
 ## 🔗 Project Links
 
-- 🎨 [Figma Design](https://www.figma.com/design/PbjRdsPChIZqlkCWija4IE/Untitled?node-id=0-1&t=79is7hoz31yp9w1t-1)
+- 🎨 [Figma Design](https://www.figma.com/design/mEW7PgzyBzhVAkbExzHGIB/Untitled?node-id=7-25&t=dRFRsdVcwd8nZ6TJ-1)
 - ✅ [Trello Board](https://trello.com/b/C46ETC4J/m3adaty-orange-academy)
 ---
 

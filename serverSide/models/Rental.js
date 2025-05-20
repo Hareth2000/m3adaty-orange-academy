@@ -20,7 +20,7 @@ const RentalSchema = new mongoose.Schema(
     status: {
       // أضفنا accepted و rejected
       type: String,
-      enum: ["pending", "accepted", "rejected", "paid", "cancelled"],
+      enum: ["pending", "accepted", "rejected", "paid", "cancelled", "completed"],
       default: "pending",
     },  price: {  // إضافة السعر الإجمالي
       type: Number,

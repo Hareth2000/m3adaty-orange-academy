@@ -91,13 +91,10 @@ const UserProfile = () => {
     // جلب طلبات التأجير
     const fetchRentals = async () => {
       try {
-        console.log("Fetching rentals...");
         const res = await axios.get(
           "http://localhost:5000/api/rentals/my-rentals",
           { withCredentials: true }
         );
-        console.log("Full API response:", res);
-        console.log("Rentals data:", res.data);
         setRentals(res.data);
       } catch (error) {
         console.error("خطأ في جلب طلبات التأجير:", error.response || error);
@@ -112,7 +109,7 @@ const UserProfile = () => {
     fetchUserProfile();
     fetchFavorites();
     fetchRentals();
-  }, [location.search]);
+  }, [location.search, isEditing]);
 
   // تحديث حقول الإدخال في الحالة
   const handleInputChange = (e) => {
@@ -131,10 +128,10 @@ const UserProfile = () => {
     const formData = new FormData();
     formData.append("name", updatedUser.name);
     formData.append("email", updatedUser.email);
-    // لاحظ: phone -> phoneNumber لأن في المودل والدالة اسمه phoneNumber
     formData.append("phoneNumber", updatedUser.phone);
     formData.append("address", updatedUser.address);
 
+    // أضف الصورة فقط إذا تم رفع صورة جديدة
     if (
       updatedUser.profilePicture &&
       updatedUser.profilePicture instanceof File
@@ -151,7 +148,22 @@ const UserProfile = () => {
           headers: { "Content-Type": "multipart/form-data" },
         }
       );
-      setUser(res.data.user);
+      
+      // تحديث البيانات في الحالة
+      const updatedUserData = {
+        ...res.data.user,
+        profilePicture: res.data.user.profilePicture || user.profilePicture // احتفظ بالصورة القديمة إذا لم يتم تحديثها
+      };
+      
+      setUser(updatedUserData);
+      setUpdatedUser({
+        name: updatedUserData.name,
+        email: updatedUserData.email,
+        phone: updatedUserData.phoneNumber || "",
+        address: updatedUserData.address || "",
+        profilePicture: updatedUserData.profilePicture,
+      });
+      
       setIsEditing(false);
       toast.success("تم تحديث المعلومات بنجاح");
     } catch (error) {
@@ -250,12 +262,27 @@ const UserProfile = () => {
         <div className="mb-6">
           <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-lg shadow-lg px-6 py-8">
             <div className="flex flex-col md:flex-row items-center">
+              {console.log('Profile Picture:', user.profilePicture)}
               {user.profilePicture ? (
-                <img
-                  src={`http://localhost:5000${user.profilePicture}`}
-                  alt="الصورة الشخصية"
-                  className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-md object-cover"
-                />
+                <div>
+                  <img
+                    src={user.profilePicture.startsWith('http') ? user.profilePicture : `http://localhost:5000${user.profilePicture}`}
+                    alt="الصورة الشخصية"
+                    className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-md object-cover"
+                    onError={(e) => {
+                      console.log('Image Error:', e);
+                      e.target.onerror = null;
+                      e.target.src = '';
+                      e.target.parentElement.innerHTML = `
+                        <div class="w-24 h-24 md:w-32 md:h-32 rounded-full bg-white flex items-center justify-center border-4 border-white shadow-md">
+                          <svg class="h-16 w-16 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        </div>
+                      `;
+                    }}
+                  />
+                </div>
               ) : (
                 <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-white flex items-center justify-center border-4 border-white shadow-md">
                   <User className="h-16 w-16 text-yellow-500" />
@@ -357,6 +384,16 @@ const UserProfile = () => {
                 {rentals.length}
               </span>
             </button>
+            {user && user.role === "customer" && (
+              <Link
+                to="/register-partner"
+                className="inline-flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200 ml-2"
+                style={{ whiteSpace: 'nowrap' }}
+              >
+                <Truck className="h-5 w-5" />
+                تسجيل كشريك
+              </Link>
+            )}
           </div>
         </div>
 

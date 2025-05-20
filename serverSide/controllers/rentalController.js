@@ -257,10 +257,46 @@ const getUserRentals = async (req, res) => {
   }
 };
 
+const processPayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { paymentMethod, ...paymentDetails } = req.body;
+    const rental = await Rental.findById(id);
+    if (!rental) return res.status(404).json({ message: 'الطلب غير موجود' });
+    if (rental.isPaid) return res.status(400).json({ message: 'تم دفع هذا الطلب مسبقاً' });
+    rental.isPaid = true;
+    rental.paymentDate = new Date();
+    rental.paymentMethod = paymentMethod;
+    rental.paymentDetails = paymentDetails;
+    rental.status = 'completed';
+    await rental.save();
+    res.status(200).json({ message: 'تم الدفع بنجاح', rental });
+  } catch (error) {
+    console.error('خطأ أثناء معالجة الدفع:', error);
+    res.status(500).json({ message: 'حدث خطأ أثناء معالجة الدفع' });
+  }
+};
+
+const getRentalById = async (req, res) => {
+  try {
+    const rental = await Rental.findById(req.params.id)
+      .populate('user')
+      .populate('equipment');
+    if (!rental) {
+      return res.status(404).json({ message: 'الطلب غير موجود' });
+    }
+    res.json({ rental });
+  } catch (error) {
+    res.status(500).json({ message: 'حدث خطأ أثناء جلب الطلب' });
+  }
+};
+
 module.exports = {
   createRental,
   getRentalsByOwner,
   updateRentalStatus,
   getBookedDates,
-  getUserRentals
+  getUserRentals,
+  processPayment,
+  getRentalById
 };

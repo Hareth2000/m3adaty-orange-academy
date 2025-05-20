@@ -47,24 +47,13 @@ const StatsPage = () => {
     const fetchStats = async () => {
       try {
         setIsLoading(true);
-        // For demo purposes, we'll use mock data instead of API
-        // Uncomment this for real API call
-        /*
         const res = await axios.get("http://localhost:5000/api/admin/stats", {
           withCredentials: true,
         });
         setStats(res.data);
-        */
-
-        // Simulate API delay
-        setTimeout(() => {
-          generateMonthlyStats();
-          setIsLoading(false);
-        }, 1000);
+        setIsLoading(false);
       } catch (err) {
         console.error("Error fetching stats", err);
-        // Generate demo data if API fails
-        generateMonthlyStats();
         setIsLoading(false);
       }
     };
@@ -110,36 +99,6 @@ const StatsPage = () => {
     );
   };
 
-  // Generate sample monthly stats for demonstration
-  const generateMonthlyStats = () => {
-    const months = [
-      "يناير",
-      "فبراير",
-      "مارس",
-      "أبريل",
-      "مايو",
-      "يونيو",
-      "يوليو",
-      "أغسطس",
-      "سبتمبر",
-      "أكتوبر",
-      "نوفمبر",
-      "ديسمبر",
-    ];
-    const demoData = months.map((month, index) => {
-      // Use increasing trend for better visualization
-      const multiplier = (index + 1) / 12;
-      return {
-        name: month,
-        المستخدمين: Math.floor(5 + 25 * multiplier),
-        المعدات: Math.floor(3 + 27 * multiplier),
-        الطلبات: Math.floor(2 + 18 * multiplier),
-        المدفوعات: Math.floor(1 + 29 * multiplier),
-      };
-    });
-    setMonthlyStats(demoData);
-  };
-
   // Data for main overview chart - using Arabic labels
   const overviewData = [
     {
@@ -160,7 +119,12 @@ const StatsPage = () => {
       color: "#60a5fa",
       fillOpacity: 1,
     },
-    { name: "الطلبات", value: stats.rentals, color: "#4ade80", fillOpacity: 1 },
+    { 
+      name: "الطلبات", 
+      value: stats.rentals, 
+      color: "#4ade80", 
+      fillOpacity: 1 
+    },
     {
       name: "المدفوعات",
       value: stats.payments,
@@ -175,12 +139,12 @@ const StatsPage = () => {
     },
   ];
 
-  // Data for pie chart - rental status distribution (demo data)
+  // Data for pie chart - rental status distribution (real data)
   const rentalStatusData = [
-    { name: "قيد الانتظار", value: 30, color: "#fbbf24", percentage: "30%" },
-    { name: "مقبول", value: 40, color: "#4ade80", percentage: "40%" },
-    { name: "مرفوض", value: 20, color: "#f87171", percentage: "20%" },
-    { name: "مكتمل", value: 10, color: "#60a5fa", percentage: "10%" },
+    { name: "قيد الانتظار", value: stats.rentalsPending || 0, color: "#fbbf24", percentage: `${Math.round((stats.rentalsPending / stats.rentals) * 100) || 0}%` },
+    { name: "مقبول", value: stats.rentalsAccepted || 0, color: "#4ade80", percentage: `${Math.round((stats.rentalsAccepted / stats.rentals) * 100) || 0}%` },
+    { name: "مرفوض", value: stats.rentalsRejected || 0, color: "#f87171", percentage: `${Math.round((stats.rentalsRejected / stats.rentals) * 100) || 0}%` },
+    { name: "مكتمل", value: stats.rentalsCompleted || 0, color: "#60a5fa", percentage: `${Math.round((stats.rentalsCompleted / stats.rentals) * 100) || 0}%` },
   ];
 
   // Custom tooltip for charts

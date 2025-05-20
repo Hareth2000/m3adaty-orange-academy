@@ -90,11 +90,18 @@ exports.getUserProfile = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        profilePicture: user.profilePicture,
+        phoneNumber: user.phoneNumber,
+        address: user.address,
+        profilePicture: user.profilePicture || null,
         createdAt: user.createdAt,
-        savedArticles: user.savedArticles,
-        comments: user.comments,
-        readingHistory: user.readingHistory,
+        partnerStatus: user.partnerStatus,
+        companyName: user.companyName,
+        businessType: user.businessType,
+        yearsOfExperience: user.yearsOfExperience,
+        equipmentTypes: user.equipmentTypes,
+        taxNumber: user.taxNumber,
+        website: user.website,
+        description: user.description
       },
     });
   } catch (error) {
@@ -115,15 +122,21 @@ const profileUpdateSchema = Joi.object({
       "string.base": "البريد الإلكتروني يجب أن يكون نصًا",
       "string.email": "صيغة البريد الإلكتروني غير صحيحة",
     }),
-  file: Joi.any().optional(), 
+  phoneNumber: Joi.string().optional().allow(null, "").messages({
+    "string.base": "رقم الهاتف يجب أن يكون نصًا",
+  }),
+  address: Joi.string().optional().allow(null, "").messages({
+    "string.base": "العنوان يجب أن يكون نصًا",
+  }),
+  file: Joi.any().optional(),
 });
 
 exports.updateUserProfile = async (req, res) => {
-  const { name, email } = req.body;
+  const { name, email, phoneNumber, address } = req.body;
   const profilePicture = req.file ? `/uploads/${req.file.filename}` : null;
 
   const { error } = profileUpdateSchema.validate(
-    { name, email, file: req.file },
+    { name, email, phoneNumber, address, file: req.file },
     { abortEarly: false }
   );
 
@@ -140,6 +153,8 @@ exports.updateUserProfile = async (req, res) => {
 
     user.name = name || user.name;
     user.email = email || user.email;
+    user.phoneNumber = phoneNumber !== undefined ? phoneNumber : user.phoneNumber;
+    user.address = address !== undefined ? address : user.address;
     if (profilePicture) {
       user.profilePicture = profilePicture;
     }
@@ -152,10 +167,11 @@ exports.updateUserProfile = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
-        profilePicture: user.profilePicture,
-        savedArticles: user.savedArticles,
-        comments: user.comments,
-        readingHistory: user.readingHistory,
+        phoneNumber: user.phoneNumber,
+        address: user.address,
+        profilePicture: user.profilePicture || null,
+        role: user.role,
+        createdAt: user.createdAt,
       },
     });
   } catch (error) {

@@ -10,8 +10,8 @@ const CategoriesSection = () => {
       title: "آليات ثقيلة",
       description:
         "معدات ثقيلة للبناء والتشييد مع أعلى معايير الجودة والسلامة.",
-      image:
-        "https://images.pexels.com/photos/1078884/pexels-photo-1078884.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+      video:
+        "/src/assets/19672091-uhd_3840_2160_24fps.mp4",
       count: "25+",
       path: "/categories?category=heavy-machinery",
       color: "#FFB800",
@@ -20,8 +20,9 @@ const CategoriesSection = () => {
       title: "عدد صناعية",
       description:
         "أدوات صناعية موثوقة لمختلف الاستخدامات والمشاريع الاحترافية.",
-      image:
-        "https://images.pexels.com/photos/7484788/pexels-photo-7484788.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+      video:
+       
+        "/src/assets/6046362-uhd_3840_2160_24fps.mp4",
       count: "18+",
       path: "/categories?category=industrial-tools",
       color: "#FFB800",
@@ -30,8 +31,8 @@ const CategoriesSection = () => {
       title: "عدد زراعية",
       description:
         "معدات زراعية حديثة لتحسين الإنتاجية والكفاءة في القطاع الزراعي.",
-      image:
-        "https://images.pexels.com/photos/2255801/pexels-photo-2255801.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+      video:
+      "/src/assets/9477578-uhd_3840_2160_24fps.mp4",
       count: "15+",
       path: "/categories?category=agricultural-tools",
       color: "#FFB800",
@@ -63,25 +64,23 @@ const CategoriesSection = () => {
               className="group cursor-pointer"
             >
               <div className="relative bg-[#1A1A1A] rounded-2xl overflow-hidden">
-                {/* الصورة مع تأثير التدرج */}
+                {/* الفيديو مع تأثير التدرج */}
                 <div className="relative h-80">
-                  <img
-                    src={category.image}
+                  <video
+                    src={category.video}
                     alt={category.title}
                     className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-opacity duration-500"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
                   />
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#1A1A1A]/50 to-[#1A1A1A]"></div>
+                  <div className="absolute inset-0 bg-black opacity-30 group-hover:opacity-20 transition-opacity duration-500"></div>
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#1A1A1A]/30 to-[#1A1A1A]/70"></div>
                 </div>
 
                 {/* المحتوى */}
                 <div className="absolute inset-0 p-8 flex flex-col justify-between">
-                  {/* العدد */}
-                  <div className="flex items-center justify-end">
-                    <span className="bg-[#FFB800] text-[#1A1A1A] px-4 py-2 rounded-full text-sm font-bold">
-                      {category.count} معدات
-                    </span>
-                  </div>
-
                   {/* العنوان والوصف */}
                   <div className="mt-auto">
                     <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-[#FFB800] transition-colors duration-300">

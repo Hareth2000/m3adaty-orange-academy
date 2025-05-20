@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import Swal from "sweetalert2";
 import { CreditCard, Mail, User, MapPin, Calendar, Lock, DollarSign, ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const PaymentPage = () => {
   const navigate = useNavigate();
-
+  const { rentalId } = useParams();
 
   const urlParams = new URLSearchParams(location.search);
   const price = urlParams.get("price");  
@@ -22,7 +22,6 @@ const PaymentPage = () => {
 
   const paymentMethods = [
     { id: 'creditCard', name: 'بطاقة ائتمان', icon: CreditCard },
-    { id: 'paypal', name: 'باي بال', icon: Mail },
     { id: 'cash', name: 'كاش', icon: DollarSign }
   ];
 
@@ -31,14 +30,15 @@ const PaymentPage = () => {
   
     const paymentData = {
       ...formData,
-      amount: 100, // يمكنك تعديل المبلغ حسب الحاجة
+      amount: price,
     };
   
     try {
-      const response = await fetch("http://localhost:5000/api/payment", {
+      const response = await fetch(`http://localhost:5000/api/rentals/${rentalId}/pay`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(paymentData),
+        credentials: "include"
       });
   
       const result = await response.json();
@@ -52,7 +52,7 @@ const PaymentPage = () => {
           confirmButtonColor: '#FF7517',
           timer: 3000,
         });
-        navigate('/'); // توجيه المستخدم إلى صفحة النجاح
+        navigate('/profile?tab=rentals'); // توجيه المستخدم إلى صفحة الطلبات
       } else {
         Swal.fire({
           title: "خطأ!",
@@ -152,15 +152,11 @@ const PaymentPage = () => {
               {/* طرق الدفع */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-[#2C2727] mb-2">طريقة الدفع</label>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   {paymentMethods.map((method) => (
                     <label
                       key={method.id}
-                      className={`relative flex flex-col items-center p-4 border rounded-lg cursor-pointer transition-all ${
-                        formData.paymentMethod === method.id
-                          ? 'border-yellow-500 bg-yellow-100'
-                          : 'border-gray-300 hover:border-yellow-500'
-                      }`}
+                      className={`relative flex flex-col items-center p-4 border rounded-lg cursor-pointer transition-all ${formData.paymentMethod === method.id ? 'border-yellow-500 bg-yellow-100 ring-2 ring-yellow-500' : 'border-gray-300 hover:border-yellow-500'}`}
                     >
                       <input
                         type="radio"
@@ -170,12 +166,11 @@ const PaymentPage = () => {
                         onChange={handleChange}
                         className="sr-only"
                       />
-                      <method.icon className={`h-6 w-6 mb-2 ${
-                        formData.paymentMethod === method.id ? 'text-yellow-500' : 'text-gray-400'
-                      }`} />
-                      <span className={`text-sm ${
-                        formData.paymentMethod === method.id ? 'text-yellow-600' : 'text-gray-600'
-                      }`}>{method.name}</span>
+                      <method.icon className={`h-6 w-6 mb-2 ${formData.paymentMethod === method.id ? 'text-yellow-500' : 'text-gray-400'}`} />
+                      <span className={`text-sm font-medium ${formData.paymentMethod === method.id ? 'text-yellow-600' : 'text-gray-600'}`}>{method.name}</span>
+                      {formData.paymentMethod === method.id && (
+                         <div className="absolute top-2 left-2 w-4 h-4 bg-yellow-500 rounded-full border-2 border-white"></div>
+                      )}
                     </label>
                   ))}
                 </div>
@@ -183,9 +178,9 @@ const PaymentPage = () => {
 
               {/* عرض حقول الدفع حسب طريقة الدفع المختارة */}
               {formData.paymentMethod === 'creditCard' && (
-                <>
+                <div className="space-y-4">
                   {/* حقل اسم صاحب البطاقة */}
-                  <div className="mb-4">
+                  <div>
                     <label className="block text-sm font-medium text-[#2C2727] mb-2">اسم صاحب البطاقة</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
@@ -204,7 +199,7 @@ const PaymentPage = () => {
                   </div>
                   
                   {/* حقل رقم البطاقة */}
-                  <div className="mb-4">
+                  <div>
                     <label className="block text-sm font-medium text-[#2C2727] mb-2">رقم البطاقة</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
@@ -262,13 +257,6 @@ const PaymentPage = () => {
                       </div>
                     </div>
                   </div>
-                </>
-              )}
-
-              {formData.paymentMethod === 'paypal' && (
-                <div className="mb-6 p-4 bg-gray-50 rounded-lg text-center">
-                  <p className="text-[#2C2727]/80 mb-2">سيتم توجيهك إلى موقع باي بال لإتمام عملية الدفع</p>
-                  <p className="text-sm text-[#2C2727]/60">يرجى التأكد من استخدام نفس البريد الإلكتروني المسجل في الموقع</p>
                 </div>
               )}
 
@@ -323,14 +311,13 @@ const PaymentPage = () => {
                 className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 flex items-center justify-center gap-2"
               >
                 {formData.paymentMethod === 'creditCard' ? 'إتمام الدفع' : 
-                 formData.paymentMethod === 'paypal' ? 'الانتقال إلى باي بال' : 
                  'تأكيد الطلب'}
                 <ArrowRight className="h-4 w-4" />
               </button>
               
               {/* شعار الأمان */}
-              <div className="mt-4 flex items-center justify-center text-[#2C2727]/60 text-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+              <div className="mt-6 flex items-center justify-center text-gray-500 text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1 text-green-500" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                 </svg>
                 الدفع مؤمّن ومشفر

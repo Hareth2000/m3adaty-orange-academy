@@ -11,10 +11,11 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import NotificationBell from "../Notifications/NotificationBell";
+import logo from "../../assets/images/swapkit-high-resolution-logo-removebg-preview.png";
 
 const publicPages = [
   { name: "الرئيسية", href: "/" },
-  { name: "التصنيفات", href: "/categories" },
+  { name: "المعدات", href: "/categories" },
   
   { name: "من نحن", href: "/about" },
   { name: "تواصل معنا", href: "/contact" },
@@ -22,11 +23,9 @@ const publicPages = [
 
 const customerPages = [
   { name: "الرئيسية", href: "/" },
-  { name: "التصنيفات", href: "/categories" },
-  { name: "تسجيل كشريك", href: "/register-partner" },
+  { name: "المعدات", href: "/categories" },
   { name: "من نحن", href: "/about" },
   { name: "تواصل معنا", href: "/contact" },
-
 ];
 
 const partnerPages = [
@@ -131,17 +130,10 @@ const Navbar = () => {
             {/* Logo */}
             <div className="flex-shrink-0">
               <Link to="/" className="flex items-center">
-                <div className="flex items-center space-x-1.5 sm:space-x-2 space-x-reverse">
-                  <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 p-1.5 sm:p-2 rounded-lg">
-                    <span className="text-white text-sm sm:text-base font-bold">
-                      M3
-                    </span>
+                <div className="flex items-center">
+                  <div className="w-35 h-40">
+                    <img src={logo} alt="swapKit Logo" className="w-full h-full object-contain" />
                   </div>
-                  <span
-                    className={`text-base sm:text-lg font-bold transition-colors duration-300 ${textColor}`}
-                  >
-                    معدات تك
-                  </span>
                 </div>
               </Link>
             </div>
@@ -172,14 +164,6 @@ const Navbar = () => {
 
             {/* Right Side Actions */}
             <div className="flex items-center space-x-0.5 sm:space-x-1 md:space-x-2 space-x-reverse">
-              {/* Favorites */}
-              <Link
-                to="/favorites"
-                className={`p-1 sm:p-1.5 rounded-lg transition-colors duration-300 relative ${iconColor} ${hoverBg}`}
-                aria-label="المفضلة"
-              >
-                <Heart className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
-              </Link>
               {/* Notification Bell */}
               <NotificationBell />
               {/* Auth Button */}
