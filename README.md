@@ -31,27 +31,26 @@ Businesses and individuals often can't afford the high costs of owning heavy equ
 
 ## ⚙️ Tech Stack
 
-| Layer       | Technology                     |
-|-------------|---------------------------------|
-| Frontend    | React JS, Tailwind CSS   |
-| Backend     | Node.js, Express.js             |
-| Database    | MongoDB                         |
-| Tools       | GitHub, Trello, Figma           |
+| Layer    | Technology             |
+| -------- | ---------------------- |
+| Frontend | React JS, Tailwind CSS |
+| Backend  | Node.js, Express.js    |
+| Database | MongoDB                |
+| Tools    | GitHub, Trello, Figma  |
 
 ---
 
 ## 🧠 Business Model Summary
 
-- **Key Partners:** Equipment owners, logistics providers, maintenance shops, insurance providers  
-- **Customer Segments:** Contractors, site managers, farmers, SMEs  
-- **Value Proposition:** One-stop, flexible, low-cost machinery rental with delivery  
-- **Revenue Streams:** 15% rental commission + delivery & service upsells  
-- **Channels:** SEO website, social media ads, industry partnerships  
+- **Key Partners:** Equipment owners, logistics providers, maintenance shops, insurance providers
+- **Customer Segments:** Contractors, site managers, farmers, SMEs
+- **Value Proposition:** One-stop, flexible, low-cost machinery rental with delivery
+- **Revenue Streams:** 15% rental commission + delivery & service upsells
+- **Channels:** SEO website, social media ads, industry partnerships
 
 ---
 
 ## 📁 Project Structure
-
 
 ---
 
@@ -59,6 +58,10 @@ Businesses and individuals often can't afford the high costs of owning heavy equ
 
 - 🎨 [Figma Design](https://www.figma.com/design/mEW7PgzyBzhVAkbExzHGIB/Untitled?node-id=7-25&t=dRFRsdVcwd8nZ6TJ-1)
 - ✅ [Trello Board](https://trello.com/b/C46ETC4J/m3adaty-orange-academy)
+- ✅ [canva](https://www.canva.com/design/DAGnDprk3RA/CGjn0PBt3pFTU8LxKkm6rw/edit)
+- ✅ [brief](https://github.com/Hareth2000/m3adaty-orange-academy/blob/main/SwapKit_OnePage_Summary.pdf)
+- ✅ [DOC](https://github.com/Hareth2000/m3adaty-orange-academy/blob/main/SwapKit%20-%20Industrial%20and%20agricultural%20machinery%20and%20equipment%20rental%20platform.pdf)
+
 ---
 
 ## 🛠️ Installation Instructions
@@ -75,3 +78,4 @@ npm run dev
 cd ../clientSide
 npm install
 npm start
+```
